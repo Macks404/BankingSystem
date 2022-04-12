@@ -1,15 +1,18 @@
-import java.io.InputStream;
-import java.util.InputMismatchException;
+import java.util.Locale;
 import java.util.Scanner;
+import java.util.ArrayList;
 
 public class Main {
     private static String[] startupMethods = {"Login", "Create Account"};
+    private static ArrayList<String> files;
     private static Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args)
     {
-        System.out.println(startupMethods[getLoginMethod()]);
+        int index = getLoginMethod();
+        openAccount(index);
     }
+
 
     public static int getLoginMethod()
     {
@@ -38,5 +41,50 @@ public class Main {
             }
         }
         return(index);
+    }
+
+    public static void openAccount(int index)
+    {
+        if(startupMethods[index].equals("Create Account"))
+        {
+            createAccount();
+        }
+        else
+        {
+            login();
+        }
+    }
+
+    public static void login()
+    {
+        System.out.println("Please enter your name: ");
+        String username = scanner.nextLine();
+        boolean isLoggingIn = true;
+
+        while(isLoggingIn)
+        {
+            try
+            {
+                //openfile
+            }
+            catch(Exception exception)
+            {
+                System.out.println("This username doesn't exist! \n Would you like to create an account? Y/N");
+                String choice = scanner.nextLine();
+                choice = choice.toUpperCase();
+                if(choice.equals("Y"))
+                {
+                    isLoggingIn = false;
+                    createAccount();
+                }
+            }
+        }
+
+
+
+    }
+    public static void createAccount()
+    {
+        login();
     }
 }
