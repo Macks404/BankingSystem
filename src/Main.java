@@ -12,6 +12,8 @@ public class Main {
     private static String documentsPath;
     private static File documentsFolder;
     private static String password;
+    private static int passwordAttempts = 5;
+    private static String realPswrd;
 
     public static void main(String[] args)
     {
@@ -49,6 +51,23 @@ public class Main {
             System.out.println("An error occurred.");
             exception.printStackTrace();
         }
+    }
+    public static void getPassword(String path)
+    {
+        try
+        {
+            System.out.println(path);
+            File obj = new File(path);
+            Scanner scan = new Scanner(obj);
+            realPswrd = scan.nextLine();
+            scan.close();
+        }
+        catch(Exception exception)
+        {
+            System.out.println("Error Occured When Opening File");
+            exception.printStackTrace();
+        }
+
     }
     public static void writeToFile(String path, String text)
     {
@@ -112,10 +131,11 @@ public class Main {
 
         while(isLoggingIn)
         {
-            File obj = new File(currentPath+"\\" + username);
+            File obj = new File(documentsPath+"\\BankingSystem\\Accounts\\" + username);
 
             if(!obj.exists())
             {
+                obj = null;
                 System.out.println("This username doesn't exist! \nWould you like to create an account? Y/N");
                 String choice = scanner.nextLine();
                 choice = choice.toUpperCase();
@@ -132,15 +152,30 @@ public class Main {
             }
             else
             {
-                System.out.println("Logging in...");
-                isLoggingIn=false;
-                return;
+
+                getPassword(documentsPath+"\\BankingSystem\\Accounts\\" + username + "\\Password.txt");
+
+
+                for(int i = 0; i < passwordAttempts; i++) {
+                    System.out.println("Please enter your password: ");
+                    String password = scanner.nextLine();
+                    if (password.equals(realPswrd)) {
+                        isLoggingIn = false;
+                        System.out.println("Logging in...");
+                        return;
+                    } else {
+                        System.out.println("Wrong Password!");
+                    }
+                }
+                System.out.println("Suspicious Activity Detected, Closing...");
+                System.exit(0);
             }
         }
 
 
 
     }
+
     public static void createAccount()
     {
         System.out.println("What would you like your username to be?");
@@ -169,5 +204,7 @@ public class Main {
         createFile("Password",".txt",documentsPath+"\\BankingSystem\\Accounts\\"+username+"\\");
         writeToFile(documentsPath+"\\BankingSystem\\Accounts\\"+username+"\\Password.txt",password);
         createFile("data",".txt",documentsPath+"\\BankingSystem\\Accounts\\"+username+"\\");
+
+        login();
     }
 }
