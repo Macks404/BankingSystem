@@ -1,32 +1,78 @@
-import java.io.IOException;
 import java.io.FileWriter;
+import java.time.Instant;
 import java.util.Scanner;
 import java.util.ArrayList;
 import java.io.File;
+import java.nio.file.*;
+
 
 public class Main {
-    private static String[] startupMethods = {"Login", "Create Account"};
+    private static String[] startupOptions = {"Login", "Create Account"};
+    private static String[] loggedInOptions = {"View Account Details","Deposit","Withdraw","Exit"};
+    private static String loggedInAccountName;
     private static ArrayList<String> files;
     private static Scanner scanner = new Scanner(System.in);
     private static String currentPath = System.getProperty("user.dir");
     private static String documentsPath;
-    private static File documentsFolder;
     private static String password;
-    private static int passwordAttempts = 5;
     private static String realPswrd;
+
 
     public static void main(String[] args)
     {
         setupDir();
-        int index = getLoginMethod();
-        openAccount(index);
+        boolean gettingIndex = true;
+        while(gettingIndex)
+        {
+            int index = getOption(startupOptions);
+            if(index == 1)
+            {
+                createAccount();
+                gettingIndex = false;
+            }
+            else if(index == 0)
+            {
+                login();
+                gettingIndex = false;
+            }
+            else
+            {
+                System.out.println("Enter a valid number!");
+            }
+        }
+
+        gettingIndex = true;
+        while(gettingIndex)
+        {
+            int index = getOption(loggedInOptions);
+            if(index == 0)
+            {
+                viewAccountDetails();
+                gettingIndex = false;
+            }
+            else if(index == 1)
+            {
+                deposit();
+                gettingIndex = false;
+            }
+            else if(index == 2)
+            {
+                withdraw();
+                gettingIndex = false;
+            }
+            else if(index == 3)
+            {
+                gettingIndex = false;
+                System.exit(0);
+            }
+        }
     }
 
 
     public static void setupDir()
     {
         documentsPath = System.getProperty("user.home") + "\\Documents";
-        documentsFolder = new File(documentsPath);
+        File documentsFolder = new File(documentsPath);
         File[] filesInDocs = documentsFolder.listFiles();
         for(int i =0; i< filesInDocs.length; i++)
         {
@@ -52,14 +98,24 @@ public class Main {
             exception.printStackTrace();
         }
     }
-    public static void getPassword(String path)
+    public static String[] readFile(String path)
     {
+        String[] text = null;
         try
         {
-            System.out.println(path);
+            long lines = 0;
             File obj = new File(path);
             Scanner scan = new Scanner(obj);
-            realPswrd = scan.nextLine();
+            Path path1 = Path.of(path);
+            lines = Files.lines(path1).count();
+            text = new String[(int) lines];
+            int i = 0;
+            while(scan.hasNextLine())
+            {
+                text[i] = scan.nextLine();
+                i++;
+            }
+
             scan.close();
         }
         catch(Exception exception)
@@ -67,7 +123,7 @@ public class Main {
             System.out.println("Error Occured When Opening File");
             exception.printStackTrace();
         }
-
+        return text;
     }
     public static void writeToFile(String path, String text)
     {
@@ -84,44 +140,29 @@ public class Main {
         }
 
     }
-    public static int getLoginMethod()
+    public static int getOption(String[] options)
     {
         System.out.println("What Would you like to do?");
-        for(int i = 0; i < startupMethods.length; i++)
+        for(int i = 0; i < options.length; i++)
         {
-            System.out.println(i+1 + " " + startupMethods[i]);
+            System.out.println(i+1 + " " + options[i]);
         }
         System.out.println("Choice: ");
 
         boolean isChoosing = true;
         int index=0;
 
-        while(isChoosing)
-        {
-            try
-            {
+        while(isChoosing) {
+            try {
                 index = Integer.parseInt(scanner.nextLine());
                 index--;
                 isChoosing = false;
-            }
-            catch (Exception exception)
-            {
-                System.out.println("Please enter a number lower than or equal to: "+ startupMethods.length);
+            } catch (Exception exception) {
+                System.out.println("Please enter a number lower than or equal to: " + options.length);
                 System.out.println("Choice: ");
             }
         }
-        return(index);
-    }
-    public static void openAccount(int index)
-    {
-        if(startupMethods[index].equals("Create Account"))
-        {
-            createAccount();
-        }
-        else
-        {
-            login();
-        }
+        return index;
     }
     public static void login()
     {
@@ -152,16 +193,17 @@ public class Main {
             }
             else
             {
+                String[] text = readFile(documentsPath+"\\BankingSystem\\Accounts\\" + username + "\\Password.txt");
+                realPswrd = text[0];
 
-                getPassword(documentsPath+"\\BankingSystem\\Accounts\\" + username + "\\Password.txt");
-
-
+                int passwordAttempts = 4;
                 for(int i = 0; i < passwordAttempts; i++) {
                     System.out.println("Please enter your password: ");
                     String password = scanner.nextLine();
                     if (password.equals(realPswrd)) {
                         isLoggingIn = false;
                         System.out.println("Logging in...");
+                        loggedInAccountName = username;
                         return;
                     } else {
                         System.out.println("Wrong Password!");
@@ -175,7 +217,6 @@ public class Main {
 
 
     }
-
     public static void createAccount()
     {
         System.out.println("What would you like your username to be?");
@@ -204,7 +245,26 @@ public class Main {
         createFile("Password",".txt",documentsPath+"\\BankingSystem\\Accounts\\"+username+"\\");
         writeToFile(documentsPath+"\\BankingSystem\\Accounts\\"+username+"\\Password.txt",password);
         createFile("data",".txt",documentsPath+"\\BankingSystem\\Accounts\\"+username+"\\");
+        Instant currentDate = Instant.now();
+        String currentDateStr = currentDate.toString();
+        writeToFile(documentsPath+"\\BankingSystem\\Accounts\\"+username+"\\data.txt","Account created on: " + currentDateStr.substring(0,10) + " UTC+0" + "\nType of account: {not implemented}\nCurrent balance: " + 0);
 
         login();
+    }
+    public static void viewAccountDetails()
+    {
+        String[] text = readFile(documentsPath+"\\BankingSystem\\Accounts\\"+loggedInAccountName+"\\data.txt");
+        for(int i = 0; i < text.length; i++)
+        {
+            System.out.println(text[i]);
+        }
+    }
+    public static void deposit()
+    {
+
+    }
+    public static void withdraw()
+    {
+
     }
 }
